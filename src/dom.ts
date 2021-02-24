@@ -39,7 +39,7 @@ export function updateDom(dom, prevProps, nextProps) {
 }
 
 export function createDom(fiber) {
-  const dom = fiber.type === 'TEXT_ELEMENT'
+  const dom = fiber.type === 'text'
     ? document.createTextNode('')
     : document.createElement(fiber.type)
 

@@ -1,5 +1,5 @@
 import { StateHook } from './type'
-import { getWipFiber, getWipRoot, getCurrentRoot, getDeletions, setNextUnitOfWork, setWipRoot } from './reconciler'
+import { getWipFiber, getWipRoot, getCurrentRoot, setNextUnitOfWork, setWipRoot, resetDeletions } from './reconciler'
 
 let hookIndex = null
 
@@ -10,7 +10,6 @@ export function useState(initialState: any) {
   let wipFiber = getWipFiber()
   let wipRoot = getWipRoot()
   let currentRoot = getCurrentRoot()
-  let deletions = getDeletions()
 
   const oldHook: StateHook = wipFiber.alternate && wipFiber.alternate.hooks && wipFiber.alternate.hooks[hookIndex]
   const hook: StateHook = {
@@ -34,7 +33,7 @@ export function useState(initialState: any) {
     }
     setWipRoot(wipRoot)
     setNextUnitOfWork(wipRoot)
-    deletions = []
+    resetDeletions()
   }
 
   wipFiber.hooks.push(hook)

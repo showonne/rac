@@ -1,5 +1,6 @@
 const typescript = require('rollup-plugin-typescript2')
 const { terser } = require('rollup-plugin-terser')
+const eslint = require('@rollup/plugin-eslint')
 
 export default {
   input: 'src/index.ts',
@@ -11,6 +12,7 @@ export default {
       tsconfig: 'tsconfig.json',
       useTsconfigDeclarationDir: true
     }),
-    terser()
+    terser(),
+    eslint()
   ]
 }

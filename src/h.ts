@@ -1,9 +1,9 @@
 
-import { VNode } from './type'
+import { VNode } from './type';
 
 function createTextElement(nodeValue: string): VNode {
   return {
-    type: 'TEXT_ELEMENT',
+    type: 'text',
     props: {
       nodeValue,
       children: []
@@ -19,4 +19,8 @@ export function h(type, props, ...children): VNode {
       children: children.map(child => typeof child === 'object' ? child : createTextElement(child))
     }
   }
+}
+
+export function Fragment(props) { 
+  return props.children
 }

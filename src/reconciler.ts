@@ -1,5 +1,4 @@
 import { Fiber, VNode } from './type'
-
 import { resetHookIndex } from './hooks'
 import { createDom, updateDom } from './dom'
 
@@ -12,14 +11,10 @@ let wipFiber: Fiber = null
 export const getWipFiber = () => wipFiber
 export const getWipRoot = () => wipRoot
 export const getCurrentRoot = () => currentRoot
-// export const getNextUnitOfWork = () => nextUnitOfWork
-export const getDeletions = () => deletions
 
 export const setNextUnitOfWork = (fiber: Fiber) => nextUnitOfWork = fiber
-
-export const setWipRoot = (fiber: Fiber): void => {
-  wipRoot = fiber
-}
+export const setWipRoot = (fiber: Fiber) => wipRoot = fiber
+export const resetDeletions = () => deletions = []
 
 export function render(element: VNode, container: HTMLElement): void {
   wipRoot = {
@@ -29,8 +24,10 @@ export function render(element: VNode, container: HTMLElement): void {
     },
     alternate: currentRoot
   }
-  deletions = []
+  resetDeletions()
   nextUnitOfWork = wipRoot
+
+  window.requestIdleCallback(workLoop)
 }
 
 function reconcileChildren(wipFiber: Fiber, children: VNode): void {
@@ -42,27 +39,25 @@ function reconcileChildren(wipFiber: Fiber, children: VNode): void {
     index < (children as VNode[]).length ||
     oldFiber != null
   ) {
-    const child = children[index]
+    const currentChild = children[index]
 
     let newFiber: Fiber = null
-    const sameType = oldFiber && child && child.type === oldFiber.type
+    const sameType = oldFiber && currentChild && currentChild.type === oldFiber.type
 
     if (sameType) {
-      // update
       newFiber = {
         type: oldFiber.type,
-        props: child.props,
+        props: currentChild.props,
         dom: oldFiber.dom,
         parent: wipFiber,
         alternate: oldFiber,
         effectTag: 'UPDATE'
       }
     }
-    if (child && !sameType) {
-      // add
+    if (currentChild && !sameType) {
       newFiber = {
-        type: child.type,
-        props: child.props,
+        type: currentChild.type,
+        props: currentChild.props,
         dom: null,
         parent: wipFiber,
         alternate: null,
@@ -80,7 +75,7 @@ function reconcileChildren(wipFiber: Fiber, children: VNode): void {
 
     if (index === 0) {
       wipFiber.child = newFiber
-    } else if (child) {
+    } else if (currentChild) {
       prevSibling.sibling = newFiber
     }
 
@@ -92,7 +87,7 @@ function reconcileChildren(wipFiber: Fiber, children: VNode): void {
 function updateFunctionComponent(fiber: Fiber): void {
   wipFiber = fiber
   resetHookIndex()
-  wipFiber.hooks = []
+  fiber.hooks = []
   const children = [(fiber.type as Function)(fiber.props)]
   reconcileChildren(fiber, children)
 }
@@ -101,7 +96,6 @@ function updateHostComponent(fiber: Fiber): void {
   if (!fiber.dom) {
     fiber.dom = createDom(fiber)
   }
-
   const children = fiber.props.children
   reconcileChildren(fiber, children)
 }
@@ -150,6 +144,7 @@ function commitWork(fiber: Fiber): void {
   }
   if (fiber.effectTag === 'DELETION') {
     commitDeletion(fiber, parentDom)
+    return
   }
   if (fiber.effectTag === 'UPDATE' && fiber.dom !== null) {
     updateDom(
@@ -182,5 +177,3 @@ function workLoop(deadline): void {
 
   window.requestIdleCallback(workLoop)
 }
-
-window.requestIdleCallback(workLoop)
