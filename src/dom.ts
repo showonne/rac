@@ -14,9 +14,7 @@ export function updateDom(dom, prevProps, nextProps) {
 
   Object.keys(prevProps)
     .filter(isEvent)
-    .filter(key => {
-      !(key in nextProps) || isNew(prevProps, nextProps)(key)
-    })
+    .filter(key => !(key in nextProps) || isNew(prevProps, nextProps)(key))
     .forEach(key => {
       const eventType = key.toLowerCase().substring(2)
       dom.removeEventListener(eventType, prevProps[key])

@@ -4,38 +4,37 @@ import { scheduleWork } from './scheduler'
 import { createDom, updateDom } from './dom'
 
 let currentRoot: Fiber = null
-let wipRoot: Fiber = null
+let WIPRoot: Fiber = null
 let nextUnitOfWork: Fiber = null
 let deletions: Fiber[] = []
-let wipFiber: Fiber = null
+let WIPFiber: Fiber = null
 
-const isFn = fiber => fiber.type instanceof Function
 const arrayfy = child => Array.isArray(child) ? child : [child]
 
-export const getWipFiber = () => wipFiber
-export const getWipRoot = () => wipRoot
+export const isFn = fn => fn instanceof Function
+export const getWIPFiber = () => WIPFiber
 export const getCurrentRoot = () => currentRoot
 
 export const setNextUnitOfWork = (fiber: Fiber) => nextUnitOfWork = fiber
-export const setWipRoot = (fiber: Fiber) => wipRoot = fiber
+export const setWIPRoot = (fiber: Fiber) => WIPRoot = fiber
 export const resetDeletions = () => deletions = []
 
 export function render(element: VNode, container: HTMLElement): void {
-  wipRoot = {
+  WIPRoot = {
     dom: container,
     props: {
       children: [element]
     },
     alternate: currentRoot
   }
-  nextUnitOfWork = wipRoot
+  nextUnitOfWork = WIPRoot
 
   scheduleWork(workLoop)
 }
 
-function reconcileChildren(wipFiber: Fiber, children: VNode): void {
+function reconcileChildren(WIPFiber: Fiber, children: VNode): void {
   let index = 0
-  let oldFiber = wipFiber.alternate && wipFiber.alternate.child
+  let oldFiber = WIPFiber.alternate && WIPFiber.alternate.child
   let prevSibling = null
 
   while (
@@ -52,9 +51,10 @@ function reconcileChildren(wipFiber: Fiber, children: VNode): void {
         type: oldFiber.type,
         props: currentChild.props,
         dom: oldFiber.dom,
-        parent: wipFiber,
+        parent: WIPFiber,
         alternate: oldFiber,
-        effectTag: 'UPDATE'
+        effectTag: 'UPDATE',
+        hooks: oldFiber.hooks
       }
     }
     if (currentChild && !sameType) {
@@ -62,7 +62,7 @@ function reconcileChildren(wipFiber: Fiber, children: VNode): void {
         type: currentChild.type,
         props: currentChild.props,
         dom: null,
-        parent: wipFiber,
+        parent: WIPFiber,
         alternate: null,
         effectTag: 'PLACEMENT'
       }
@@ -77,7 +77,7 @@ function reconcileChildren(wipFiber: Fiber, children: VNode): void {
     }
 
     if (index === 0) {
-      wipFiber.child = newFiber
+      WIPFiber.child = newFiber
     } else if (currentChild) {
       prevSibling.sibling = newFiber
     }
@@ -88,9 +88,8 @@ function reconcileChildren(wipFiber: Fiber, children: VNode): void {
 }
 
 function updateFunctionComponent(fiber: Fiber): void {
-  wipFiber = fiber
+  WIPFiber = fiber
   resetHookIndex()
-  fiber.hooks = []
   const children = arrayfy((fiber.type as Function)(fiber.props))
   reconcileChildren(fiber, children)
 }
@@ -103,7 +102,7 @@ function updateHostComponent(fiber: Fiber): void {
 }
 
 function performUnitOfWork(fiber: Fiber): Fiber {
-  if (isFn(fiber)) {
+  if (isFn(fiber.type)) {
     updateFunctionComponent(fiber)
   } else {
     updateHostComponent(fiber)
@@ -133,7 +132,7 @@ function commitWork(fiber: Fiber): void {
     return
   }
 
-  if (isFn(fiber)) {
+  if (isFn(fiber.type)) {
     commitWork(fiber.child)
     commitWork(fiber.sibling)
     return
@@ -165,10 +164,10 @@ function commitWork(fiber: Fiber): void {
 
 function commitRoot(): void {
   deletions.forEach(commitWork)
-  commitWork(wipRoot.child)
-  currentRoot = wipRoot
+  commitWork(WIPRoot.child)
+  currentRoot = WIPRoot
   resetDeletions()
-  wipRoot = null
+  WIPRoot = null
 }
 
 function workLoop(deadline): void {
@@ -178,7 +177,7 @@ function workLoop(deadline): void {
     shouldYield = deadline.timeRemaining() < 1
   }
 
-  if (!nextUnitOfWork && wipRoot) {
+  if (!nextUnitOfWork && WIPRoot) {
     commitRoot()
   }
 

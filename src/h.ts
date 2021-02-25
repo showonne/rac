@@ -16,9 +16,7 @@ export function h(type, props, ...children): VNode {
     type,
     props: {
       ...props,
-      children: children.map(child => {
-        return typeof child === 'object' ? child : createTextElement(child)
-      })
+      children: children.map(child => typeof child === 'object' ? child : createTextElement(child))
     }
   }
 }

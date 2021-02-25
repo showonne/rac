@@ -1,41 +1,48 @@
-import { StateHook } from './type'
-import { getWipFiber, getWipRoot, getCurrentRoot, setNextUnitOfWork, setWipRoot, resetDeletions } from './reconciler'
+import { isFn, getWIPFiber, getCurrentRoot, setNextUnitOfWork, setWIPRoot, resetDeletions } from './reconciler'
 
 let hookIndex = null
 
 export const resetHookIndex = () => hookIndex = 0
 
+const updateRoot = () => {
+  let currentRoot = getCurrentRoot()
+  let WIPRoot = {
+    dom: currentRoot.dom,
+    props: currentRoot.props,
+    alternate: currentRoot
+  }
+
+  setWIPRoot(WIPRoot)
+  setNextUnitOfWork(WIPRoot)
+  resetDeletions()
+}
+
 export function useState(initialState: any) {
+  return useReducer(null, initialState)
+}
 
-  let wipFiber = getWipFiber()
-  let wipRoot = getWipRoot()
+export function useReducer(reducer, initialState) {
+  let WIPFiber = getWIPFiber()
 
-  const oldHook: StateHook = wipFiber.alternate && wipFiber.alternate.hooks && wipFiber.alternate.hooks[hookIndex]
-  const hook: StateHook = {
-    state: oldHook ? oldHook.state : initialState,
-    queue: []
+  WIPFiber.hooks = WIPFiber?.hooks || []
+
+  let hook
+
+  if (hookIndex >= WIPFiber.hooks.length) {
+    WIPFiber.hooks.push({value: initialState})
   }
-
-  const actions = oldHook ? oldHook.queue : []
-
-  actions.forEach(action => {
-    hook.state = action instanceof Function ? action(hook.state) : action
-  })
-
-  const setState = action => {
-    let currentRoot = getCurrentRoot()
-    hook.queue.push(action)
-    wipRoot = {
-      dom: currentRoot.dom,
-      props: currentRoot.props,
-      alternate: currentRoot
+  hook = WIPFiber.hooks[hookIndex]
+  
+  const dispatch = value => {
+    if (reducer) {
+      hook.value = reducer(hook.value, value)
+    } else {
+      hook.value = isFn(value) ? value(hook.value) : value
     }
-    setWipRoot(wipRoot)
-    setNextUnitOfWork(wipRoot)
-    resetDeletions()
+
+    updateRoot()
   }
 
-  wipFiber.hooks.push(hook)
-  hookIndex++
-  return [hook.state, setState]
+  WIPFiber.hooks[hookIndex++] = hook
+  return [hook.value, dispatch]
 }

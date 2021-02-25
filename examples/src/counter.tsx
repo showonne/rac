@@ -1,37 +1,41 @@
-import { useState, h, render, Fragment } from '../../src/index'
+import { updateDom } from '../../src/dom';
+import { useState, h, render, Fragment, useReducer } from '../../src/index'
 
-function Greet() {
-  return <p>Hello ~</p>
+const initialState = { count: 0 };
+
+function reducer(state, action) {
+  switch (action.type) {
+    case 'increment':
+      return { count: state.count + 1 };
+    case 'decrement':
+      return { count: state.count - 1 };
+    default:
+      throw new Error();
+  }
 }
 
-function Counter() {
-  const [state, setState] = useState(1)
-  const [state2, setState2] = useState(2)
 
-  const updateState2 = () => {
-    setState2(state2 + 1)
+function Counter() {
+  const [title, setTitle] = useState('Hello')
+  const [state, dispatch] = useReducer(reducer, initialState);
+
+  const desc = () => dispatch({ type: 'decrement' })
+  const inc = () => dispatch({ type: 'increment' })
+
+  const updateTitle = () => {
+    setTitle(prev => `${prev}+`)
   }
 
   return (
-    <Fragment>
-      <div>
-        <h1 onClick={() => setState(c => c + 1)}>
-          Count: {state}
-        </h1>
-        <h1 onClick={updateState2}>
-          Count: {state2}
-        </h1>
-        <Greet />
-        {
-          state === 1 ? <div><span>a</span><span>b</span></div> : <div><div>c</div><div>d</div></div>
-        }
-      </div>
-      <div>
-        div 2
-      </div>
-    </Fragment>
-  )
+    <>
+      Count: {state.count}
+      <button onClick={desc}>-</button>
+      <button onClick={inc}>+</button>
+      <div></div>
+      Title: {title}
+      <button onClick={updateTitle}>update title</button>
+    </>
+  );
 }
-const element = <Counter />
-const container = document.querySelector('#root')
-render(element, container)
+
+render(<Counter />, document.querySelector('#root'))
