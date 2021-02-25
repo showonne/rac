@@ -1,12 +1,16 @@
 import { Fiber, VNode } from './type'
 import { resetHookIndex } from './hooks'
+import { scheduleWork } from './scheduler'
 import { createDom, updateDom } from './dom'
 
 let currentRoot: Fiber = null
 let wipRoot: Fiber = null
 let nextUnitOfWork: Fiber = null
-let deletions: Fiber[] = null
+let deletions: Fiber[] = []
 let wipFiber: Fiber = null
+
+const isFn = fiber => fiber.type instanceof Function
+const arrayfy = child => Array.isArray(child) ? child : [child]
 
 export const getWipFiber = () => wipFiber
 export const getWipRoot = () => wipRoot
@@ -24,10 +28,9 @@ export function render(element: VNode, container: HTMLElement): void {
     },
     alternate: currentRoot
   }
-  resetDeletions()
   nextUnitOfWork = wipRoot
 
-  window.requestIdleCallback(workLoop)
+  scheduleWork(workLoop)
 }
 
 function reconcileChildren(wipFiber: Fiber, children: VNode): void {
@@ -88,7 +91,7 @@ function updateFunctionComponent(fiber: Fiber): void {
   wipFiber = fiber
   resetHookIndex()
   fiber.hooks = []
-  const children = [(fiber.type as Function)(fiber.props)]
+  const children = arrayfy((fiber.type as Function)(fiber.props))
   reconcileChildren(fiber, children)
 }
 
@@ -96,13 +99,11 @@ function updateHostComponent(fiber: Fiber): void {
   if (!fiber.dom) {
     fiber.dom = createDom(fiber)
   }
-  const children = fiber.props.children
-  reconcileChildren(fiber, children)
+  reconcileChildren(fiber, fiber.props.children)
 }
 
 function performUnitOfWork(fiber: Fiber): Fiber {
-  const isFunctionComponent = fiber.type instanceof Function
-  if (isFunctionComponent) {
+  if (isFn(fiber)) {
     updateFunctionComponent(fiber)
   } else {
     updateHostComponent(fiber)
@@ -111,12 +112,11 @@ function performUnitOfWork(fiber: Fiber): Fiber {
   if (fiber.child) {
     return fiber.child
   }
-  let nextFiber = fiber
-  while (nextFiber) {
-    if(nextFiber.sibling) {
-      return nextFiber.sibling
+  while (fiber) {
+    if(fiber.sibling) {
+      return fiber.sibling
     }
-    nextFiber = nextFiber.parent
+    fiber = fiber.parent
   }
 }
 
@@ -133,20 +133,26 @@ function commitWork(fiber: Fiber): void {
     return
   }
 
-  let parentFiber = fiber.parent
-  while (!parentFiber.dom) {
-    parentFiber = parentFiber.parent
+  if (isFn(fiber)) {
+    commitWork(fiber.child)
+    commitWork(fiber.sibling)
+    return
   }
 
+  let parentFiber = fiber.parent
+  while(!parentFiber.dom) {
+    parentFiber = parentFiber.parent 
+  }
   const parentDom = parentFiber.dom
-  if (fiber.effectTag === 'PLACEMENT' && fiber.dom !== null) {
+
+  if (fiber.effectTag === 'PLACEMENT') {
     parentDom.appendChild(fiber.dom)
   }
   if (fiber.effectTag === 'DELETION') {
     commitDeletion(fiber, parentDom)
     return
   }
-  if (fiber.effectTag === 'UPDATE' && fiber.dom !== null) {
+  if (fiber.effectTag === 'UPDATE') {
     updateDom(
       fiber.dom,
       fiber.alternate.props,
@@ -161,6 +167,7 @@ function commitRoot(): void {
   deletions.forEach(commitWork)
   commitWork(wipRoot.child)
   currentRoot = wipRoot
+  resetDeletions()
   wipRoot = null
 }
 
@@ -175,5 +182,5 @@ function workLoop(deadline): void {
     commitRoot()
   }
 
-  window.requestIdleCallback(workLoop)
+  scheduleWork(workLoop)
 }

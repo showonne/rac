@@ -9,7 +9,6 @@ export function useState(initialState: any) {
 
   let wipFiber = getWipFiber()
   let wipRoot = getWipRoot()
-  let currentRoot = getCurrentRoot()
 
   const oldHook: StateHook = wipFiber.alternate && wipFiber.alternate.hooks && wipFiber.alternate.hooks[hookIndex]
   const hook: StateHook = {
@@ -24,7 +23,7 @@ export function useState(initialState: any) {
   })
 
   const setState = action => {
-    currentRoot = getCurrentRoot()
+    let currentRoot = getCurrentRoot()
     hook.queue.push(action)
     wipRoot = {
       dom: currentRoot.dom,

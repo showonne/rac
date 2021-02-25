@@ -1,4 +1,4 @@
-import { useState, h, render } from '../../src/index'
+import { useState, h, render, Fragment } from '../../src/index'
 
 function Greet() {
   return <p>Hello ~</p>
@@ -13,7 +13,7 @@ function Counter() {
   }
 
   return (
-    <div>
+    <Fragment>
       <div>
         <h1 onClick={() => setState(c => c + 1)}>
           Count: {state}
@@ -26,7 +26,10 @@ function Counter() {
           state === 1 ? <div><span>a</span><span>b</span></div> : <div><div>c</div><div>d</div></div>
         }
       </div>
-    </div>
+      <div>
+        div 2
+      </div>
+    </Fragment>
   )
 }
 const element = <Counter />
