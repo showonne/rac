@@ -28,6 +28,7 @@ export type VNode = TextNode | ElementNode | VNode[] | null | undefined
 
 export type Fiber<P extends Props = any> = {
   type?: string | Function,
+  ref?: any,
   props: P,
   dom?: null | HTMLElement,
   parent?: Fiber,

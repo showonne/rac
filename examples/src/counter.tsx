@@ -1,5 +1,4 @@
-import { updateDom } from '../../src/dom';
-import { useState, h, render, Fragment, useReducer, useMemo, useCallback } from '../../src/index'
+import { useState, h, render, Fragment, useReducer, useMemo, useCallback, useRef } from '../../src/index'
 
 const initialState = { count: 0 };
 
@@ -17,7 +16,8 @@ function reducer(state, action) {
 
 function Counter() {
   const [title, setTitle] = useState('Hello')
-  const [state, dispatch] = useReducer(reducer, initialState);
+  const [state, dispatch] = useReducer(reducer, initialState)
+  const countRef = useRef(null)
 
   const desc = () => dispatch({ type: 'decrement' })
   const inc = () => dispatch({ type: 'increment' })
@@ -29,11 +29,10 @@ function Counter() {
 
   const logCount = useCallback(() => {
     console.log(`log count:`, state.count)
+    console.log('ref', countRef.current)
   }, [state.count])
 
   logCount()
-
-  console.log(number)
 
   const updateTitle = () => {
     setTitle(prev => `${prev}+`)
@@ -41,12 +40,13 @@ function Counter() {
 
   return (
     <>
-      Count: {state.count}
+      <p ref={countRef}>Count: {state.count}</p>
       <button onClick={desc}>-</button>
       <button onClick={inc}>+</button>
-      <div></div>
+      <div>Divide</div>
       Title: {title}
       <button onClick={updateTitle}>update title</button>
+      {state.count < 2 ? <div>small</div> : <div>large</div>}
     </>
   );
 }

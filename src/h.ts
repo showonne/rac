@@ -12,13 +12,16 @@ function createTextElement(nodeValue: string): VNode {
 }
 
 export function h(type, props, ...children): VNode {
+  props = props || {}
+  const ref = props.ref || null
   return {
     type,
+    ref,
     props: {
       ...props,
       children: children.map(child => typeof child === 'object' ? child : createTextElement(child))
     }
-  }
+  } as VNode
 }
 
 export function Fragment(props) {

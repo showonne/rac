@@ -49,6 +49,7 @@ function reconcileChildren(WIPFiber: Fiber, children: VNode): void {
     if (sameType) {
       newFiber = {
         type: oldFiber.type,
+        ref: oldFiber.ref,
         props: currentChild.props,
         dom: oldFiber.dom,
         parent: WIPFiber,
@@ -60,6 +61,7 @@ function reconcileChildren(WIPFiber: Fiber, children: VNode): void {
     if (currentChild && !sameType) {
       newFiber = {
         type: currentChild.type,
+        ref: currentChild.ref,
         props: currentChild.props,
         dom: null,
         parent: WIPFiber,
@@ -147,10 +149,15 @@ function commitWork(fiber: Fiber): void {
   if (fiber.effectTag === 'PLACEMENT') {
     parentDom.appendChild(fiber.dom)
   }
+
   if (fiber.effectTag === 'DELETION') {
     commitDeletion(fiber, parentDom)
+    if (fiber.ref) {
+      fiber.ref.current = null
+    }
     return
   }
+
   if (fiber.effectTag === 'UPDATE') {
     updateDom(
       fiber.dom,
@@ -158,6 +165,11 @@ function commitWork(fiber: Fiber): void {
       fiber.props
     )
   }
+
+  if (fiber.ref) {
+    fiber.ref.current = fiber.dom
+  }
+
   commitWork(fiber.child)
   commitWork(fiber.sibling)
 }

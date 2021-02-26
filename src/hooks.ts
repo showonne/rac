@@ -64,3 +64,7 @@ export function useMemo(cb, deps) {
 export function useCallback(cb, deps) {
   return useMemo(() => cb, deps)
 }
+
+export function useRef(current) {
+  return useMemo(() => ({current}), [])
+}
