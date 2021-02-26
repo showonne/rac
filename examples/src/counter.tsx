@@ -1,5 +1,5 @@
 import { updateDom } from '../../src/dom';
-import { useState, h, render, Fragment, useReducer } from '../../src/index'
+import { useState, h, render, Fragment, useReducer, useMemo, useCallback } from '../../src/index'
 
 const initialState = { count: 0 };
 
@@ -21,6 +21,19 @@ function Counter() {
 
   const desc = () => dispatch({ type: 'decrement' })
   const inc = () => dispatch({ type: 'increment' })
+
+  const number = useMemo(() => {
+    console.log('number 1 with no deps')
+    return 1
+  }, [])
+
+  const logCount = useCallback(() => {
+    console.log(`log count:`, state.count)
+  }, [state.count])
+
+  logCount()
+
+  console.log(number)
 
   const updateTitle = () => {
     setTitle(prev => `${prev}+`)

@@ -2,6 +2,19 @@ import { isFn, getWIPFiber, getCurrentRoot, setNextUnitOfWork, setWIPRoot, reset
 
 let hookIndex = null
 
+const hasChanged = (prevDeps, currentDeps) => !prevDeps || prevDeps.length !== currentDeps.length || prevDeps.some((val, index) => val !== currentDeps[index])
+
+function getHook() {
+  let WIPFiber = getWIPFiber()
+
+  WIPFiber.hooks = WIPFiber?.hooks || []
+
+  if (hookIndex >= WIPFiber.hooks.length) {
+    WIPFiber.hooks.push({})
+  }
+  return WIPFiber.hooks[hookIndex++]
+}
+
 export const resetHookIndex = () => hookIndex = 0
 
 const updateRoot = () => {
@@ -22,16 +35,7 @@ export function useState(initialState: any) {
 }
 
 export function useReducer(reducer, initialState) {
-  let WIPFiber = getWIPFiber()
-
-  WIPFiber.hooks = WIPFiber?.hooks || []
-
-  let hook
-
-  if (hookIndex >= WIPFiber.hooks.length) {
-    WIPFiber.hooks.push({value: initialState})
-  }
-  hook = WIPFiber.hooks[hookIndex]
+  let hook = getHook()
   
   const dispatch = value => {
     if (reducer) {
@@ -43,6 +47,20 @@ export function useReducer(reducer, initialState) {
     updateRoot()
   }
 
-  WIPFiber.hooks[hookIndex++] = hook
-  return [hook.value, dispatch]
+  return [hook.value ? hook.value : hook.value = initialState, dispatch]
+}
+
+export function useMemo(cb, deps) {
+  let hook = getHook()
+
+  if (hasChanged(hook.deps, deps)) {
+    hook.deps = deps
+    return hook.value = cb()
+  } else {
+    return hook.value
+  }
+}
+
+export function useCallback(cb, deps) {
+  return useMemo(() => cb, deps)
 }
