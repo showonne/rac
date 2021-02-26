@@ -1,4 +1,4 @@
-import { useState, h, render, Fragment, useReducer, useMemo, useCallback, useRef } from '../../src/index'
+import { useState, h, render, Fragment, useReducer, useMemo, useCallback, useRef, useEffect } from '../../src/index'
 
 const initialState = { count: 0 };
 
@@ -13,6 +13,7 @@ function reducer(state, action) {
   }
 }
 
+const Display = props => <div>{props.content}</div>
 
 function Counter() {
   const [title, setTitle] = useState('Hello')
@@ -38,8 +39,15 @@ function Counter() {
     setTitle(prev => `${prev}+`)
   }
 
+  useEffect(() => {
+    document.title = state.count
+    console.log('effect', state.count)
+    return () => console.log('cleanup', state.count)
+  }, [state.count])
+
   return (
     <>
+      <Display content={'Demo'}></Display>
       <p ref={countRef}>Count: {state.count}</p>
       <button onClick={desc}>-</button>
       <button onClick={inc}>+</button>

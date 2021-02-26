@@ -7,12 +7,12 @@ const hasChanged = (prevDeps, currentDeps) => !prevDeps || prevDeps.length !== c
 function getHook() {
   let WIPFiber = getWIPFiber()
 
-  WIPFiber.hooks = WIPFiber?.hooks || []
+  WIPFiber.hooks = WIPFiber?.hooks || { list: [], effect: [] }
 
-  if (hookIndex >= WIPFiber.hooks.length) {
-    WIPFiber.hooks.push({})
+  if (hookIndex >= WIPFiber.hooks.list.length) {
+    WIPFiber.hooks.list.push({})
   }
-  return WIPFiber.hooks[hookIndex++]
+  return [WIPFiber.hooks.list[hookIndex++], WIPFiber]
 }
 
 export const resetHookIndex = () => hookIndex = 0
@@ -35,7 +35,7 @@ export function useState(initialState: any) {
 }
 
 export function useReducer(reducer, initialState) {
-  let hook = getHook()
+  let [hook] = getHook()
   
   const dispatch = value => {
     if (reducer) {
@@ -51,7 +51,7 @@ export function useReducer(reducer, initialState) {
 }
 
 export function useMemo(cb, deps) {
-  let hook = getHook()
+  let [hook] = getHook()
 
   if (hasChanged(hook.deps, deps)) {
     hook.deps = deps
@@ -67,4 +67,14 @@ export function useCallback(cb, deps) {
 
 export function useRef(current) {
   return useMemo(() => ({current}), [])
+}
+
+export function useEffect(cb, deps) {
+  const [hook, WIPFiber] = getHook()
+
+  if (hasChanged(hook.deps, deps)) {
+    hook.deps = deps
+    hook.cb = cb
+    WIPFiber.hooks.effect.push(hook)
+  }
 }

@@ -138,6 +138,11 @@ function commitWork(fiber: Fiber): void {
   }
 
   if (isFn(fiber.type)) {
+
+    if (fiber.hooks) {
+      executeEffect(fiber.hooks.effect)
+    }
+
     commitWork(fiber.child)
     commitWork(fiber.sibling)
     return
@@ -197,4 +202,18 @@ function workLoop(deadline): void {
   }
 
   scheduleWork(workLoop)
+}
+
+function executeEffect(effects) {
+  effects.forEach(cleanup)
+  effects.forEach(effect)
+  effects.length = 0
+}
+
+function cleanup(effect) {
+  effect.cleanup && effect.cleanup()
+}
+
+function effect(effect) {
+  effect.cleanup = effect.cb()
 }
