@@ -1,4 +1,4 @@
-import { Fiber, VNode } from './type'
+import { Fiber, VNode, ElementNode } from './type'
 import { resetHookIndex } from './hooks'
 import { scheduleWork } from './scheduler'
 import { createDom, updateDom } from './dom'
@@ -25,7 +25,8 @@ export function render(element: VNode, container: HTMLElement): void {
     props: {
       children: [element]
     },
-    alternate: currentRoot
+    alternate: currentRoot,
+    isSVG: (element as ElementNode).type === 'svg'
   }
   nextUnitOfWork = WIPRoot
 
@@ -55,7 +56,8 @@ function reconcileChildren(WIPFiber: Fiber, children: VNode): void {
         parent: WIPFiber,
         alternate: oldFiber,
         effectTag: 'UPDATE',
-        hooks: oldFiber.hooks
+        hooks: oldFiber.hooks,
+        isSVG: WIPFiber.isSVG || currentChild.type === 'svg'
       }
     }
     if (currentChild && !sameType) {
@@ -66,7 +68,8 @@ function reconcileChildren(WIPFiber: Fiber, children: VNode): void {
         dom: null,
         parent: WIPFiber,
         alternate: null,
-        effectTag: 'PLACEMENT'
+        effectTag: 'PLACEMENT',
+        isSVG: WIPFiber.isSVG || currentChild.type === 'svg'
       }
     }
     if (oldFiber && !sameType) {
@@ -142,7 +145,7 @@ function commitWork(fiber: Fiber): void {
 
   let parentFiber = fiber.parent
   while(!parentFiber.dom) {
-    parentFiber = parentFiber.parent 
+    parentFiber = parentFiber.parent
   }
   const parentDom = parentFiber.dom
 

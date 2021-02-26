@@ -46,7 +46,16 @@ function Counter() {
       <div>Divide</div>
       Title: {title}
       <button onClick={updateTitle}>update title</button>
-      {state.count < 2 ? <div>small</div> : <div>large</div>}
+      <svg>
+        <circle
+          cx="100"
+          cy="50"
+          r={Math.max(state.count * 10 + 10, 10)}
+          stroke="black"
+          stroke-width="2"
+          fill="black"
+        />
+      </svg>
     </>
   );
 }

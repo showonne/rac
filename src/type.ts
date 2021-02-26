@@ -36,7 +36,8 @@ export type Fiber<P extends Props = any> = {
   alternate: null | Fiber,
   effectTag?: string,
   child?: Fiber,
-  hooks?: any
+  hooks?: any,
+  isSVG?: any
 }
 
 type RequestIdleCallbackHandle = any

@@ -24,7 +24,11 @@ export function updateDom(dom, prevProps, nextProps) {
     .filter(isProp)
     .filter(isNew(prevProps, nextProps))
     .forEach(key => {
-      dom[key] = nextProps[key]
+      if (!(dom instanceof SVGElement)) {
+        dom[key] = nextProps[key]
+      } else {
+        dom.setAttribute(key, nextProps[key])
+      }
     })
 
   Object.keys(nextProps)
@@ -39,7 +43,7 @@ export function updateDom(dom, prevProps, nextProps) {
 export function createDom(fiber) {
   const dom = fiber.type === 'text'
     ? document.createTextNode('')
-    : document.createElement(fiber.type)
+    : fiber.isSVG ? document.createElementNS('http://www.w3.org/2000/svg', fiber.type) : document.createElement(fiber.type)
 
   updateDom(dom, {}, fiber.props)
 
