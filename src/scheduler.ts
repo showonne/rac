@@ -1,15 +1,47 @@
-export function scheduleWork(cb) {
-  if (window.requestIdleCallback) {
-    return window.requestIdleCallback(cb)
-  }
+let deadline = 0
+const threshold = 1000 / 60
 
-  const start = Date.now()
-  return setTimeout(function () {
-    cb({
-      didTimeout: false,
-      timeRemaining: function () {
-        return Math.max(0, 50 - (Date.now() - start))
-      }
-    })
-  }, 1)
+let queue = []
+let unit = []
+
+const postMessage = (() => {
+  let cb = () => unit.splice(0, unit.length).forEach(c => c())
+
+  if (typeof MessageChannel !== 'undefined') {
+    const { port1, port2 } = new MessageChannel()
+    port1.onmessage = cb
+    return () => port2.postMessage(null)
+  }
+  return () => setTimeout(cb)
+})()
+
+export function schedule(cb) {
+  unit.push(cb)
+  postMessage()
 }
+
+export function scheduleWork(cb) {
+  const job = { cb }
+  queue.push(job)
+  schedule(flushWork)
+}
+
+const flushWork = () => {
+  deadline = getTime() + threshold
+  let job = queue[0]
+  while (job && !shouldYield()) {
+    const { cb } = job
+    const next = cb()
+    if (next) {
+      job.cb = next
+    } else {
+      queue.shift()
+    }
+    job = queue[0]
+  }
+  job && schedule(flushWork)
+}
+
+export const shouldYield = () => (navigator as any)?.scheduling?.isInputPending() || getTime() > deadline
+
+const getTime = () => performance.now()

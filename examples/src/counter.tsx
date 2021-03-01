@@ -1,4 +1,4 @@
-import { useState, h, render, Fragment, useReducer, useMemo, useCallback, useRef, useEffect } from '../../src/index'
+import { useState, h, render, Fragment, useReducer, useMemo, useCallback, useRef, useEffect, useLayoutEffect } from '../../src/index'
 
 const initialState = { count: 0 };
 
@@ -45,10 +45,21 @@ function Counter() {
     return () => console.log('cleanup', state.count)
   }, [state.count])
 
+  useLayoutEffect(() => {
+    if (!document.getElementById('p')) {
+      return
+    }
+    console.log('layout effect')
+    const getRandom = () => Math.random() * 1000 % 255
+    document.getElementById('p').style.cssText += `color: rgb(${getRandom()}, ${getRandom()}, ${getRandom()})`
+  }, [state.count])
+
+  let arr = Array(10).fill('').map((_, index) => index)
+
   return (
     <>
       <Display content={'Demo'}></Display>
-      <p ref={countRef}>Count: {state.count}</p>
+      <p id="p" ref={countRef}>Count: {state.count}</p>
       <button onClick={desc}>-</button>
       <button onClick={inc}>+</button>
       <div>Divide</div>
@@ -64,6 +75,13 @@ function Counter() {
           fill="black"
         />
       </svg>
+      <ul>
+        {
+          arr.map(item => {
+            return <li>{item}</li>
+          })
+        }
+      </ul>
     </>
   );
 }

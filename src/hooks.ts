@@ -1,4 +1,4 @@
-import { isFn, getWIPFiber, getCurrentRoot, setNextUnitOfWork, setWIPRoot, resetDeletions } from './reconciler'
+import { isFn, getWIPFiber, getCurrentRoot, setWIPRoot, resetDeletions, disPatchUpdate } from './reconciler'
 
 let hookIndex = null
 
@@ -7,7 +7,7 @@ const hasChanged = (prevDeps, currentDeps) => !prevDeps || prevDeps.length !== c
 function getHook() {
   let WIPFiber = getWIPFiber()
 
-  WIPFiber.hooks = WIPFiber?.hooks || { list: [], effect: [] }
+  WIPFiber.hooks = WIPFiber?.hooks || { list: [], effect: [], layout: [] }
 
   if (hookIndex >= WIPFiber.hooks.list.length) {
     WIPFiber.hooks.list.push({})
@@ -26,8 +26,8 @@ const updateRoot = () => {
   }
 
   setWIPRoot(WIPRoot)
-  setNextUnitOfWork(WIPRoot)
   resetDeletions()
+  disPatchUpdate(WIPRoot)
 }
 
 export function useState(initialState: any) {
@@ -76,5 +76,15 @@ export function useEffect(cb, deps) {
     hook.deps = deps
     hook.cb = cb
     WIPFiber.hooks.effect.push(hook)
+  }
+}
+
+export function useLayoutEffect(cb, deps) {
+  const [hook, WIPFiber] = getHook()
+
+  if (hasChanged(hook.deps, deps)) {
+    hook.deps = deps
+    hook.cb = cb
+    WIPFiber.hooks.layout.push(hook)
   }
 }

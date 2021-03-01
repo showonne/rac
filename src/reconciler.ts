@@ -1,11 +1,10 @@
 import { Fiber, VNode, ElementNode } from './type'
 import { resetHookIndex } from './hooks'
-import { scheduleWork } from './scheduler'
+import { schedule, scheduleWork, shouldYield } from './scheduler'
 import { createDom, updateDom } from './dom'
 
 let currentRoot: Fiber = null
 let WIPRoot: Fiber = null
-let nextUnitOfWork: Fiber = null
 let deletions: Fiber[] = []
 let WIPFiber: Fiber = null
 
@@ -15,7 +14,6 @@ export const isFn = fn => fn instanceof Function
 export const getWIPFiber = () => WIPFiber
 export const getCurrentRoot = () => currentRoot
 
-export const setNextUnitOfWork = (fiber: Fiber) => nextUnitOfWork = fiber
 export const setWIPRoot = (fiber: Fiber) => WIPRoot = fiber
 export const resetDeletions = () => deletions = []
 
@@ -28,9 +26,11 @@ export function render(element: VNode, container: HTMLElement): void {
     alternate: currentRoot,
     isSVG: (element as ElementNode).type === 'svg'
   }
-  nextUnitOfWork = WIPRoot
+  disPatchUpdate(WIPRoot)
+}
 
-  scheduleWork(workLoop)
+export function disPatchUpdate(nextUnitOfWork) {
+  scheduleWork(workLoop.bind(null, nextUnitOfWork))
 }
 
 function reconcileChildren(WIPFiber: Fiber, children: VNode): void {
@@ -140,7 +140,8 @@ function commitWork(fiber: Fiber): void {
   if (isFn(fiber.type)) {
 
     if (fiber.hooks) {
-      executeEffect(fiber.hooks.effect)
+      executeEffect(fiber.hooks.layout)
+      schedule(() => executeEffect(fiber.hooks.effect))
     }
 
     commitWork(fiber.child)
@@ -190,18 +191,17 @@ function commitRoot(): void {
   WIPRoot = null
 }
 
-function workLoop(deadline): void {
-  let shouldYield = false
-  while (nextUnitOfWork && !shouldYield) {
+function workLoop(nextUnitOfWork): void {
+  while (nextUnitOfWork && !shouldYield()) {
     nextUnitOfWork = performUnitOfWork(nextUnitOfWork)
-    shouldYield = deadline.timeRemaining() < 1
+  }
+  if (nextUnitOfWork) {
+    return workLoop.bind(null, nextUnitOfWork)
   }
 
   if (!nextUnitOfWork && WIPRoot) {
     commitRoot()
   }
-
-  scheduleWork(workLoop)
 }
 
 function executeEffect(effects) {
