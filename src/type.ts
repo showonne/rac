@@ -28,12 +28,14 @@ export type VNode = TextNode | ElementNode | VNode[] | null | undefined
 
 export type Fiber<P extends Props = any> = {
   type?: string | Function,
+  dirty?: Boolean,
   ref?: any,
+  kids?: any[],
   props: P,
   dom?: null | HTMLElement,
   parent?: Fiber,
   sibling?: Fiber,
-  alternate: null | Fiber,
+  prevProps: P,
   effectTag?: string,
   child?: Fiber,
   hooks?: any,

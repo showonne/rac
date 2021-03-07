@@ -3,8 +3,7 @@ import { resetHookIndex } from './hooks'
 import { schedule, scheduleWork, shouldYield } from './scheduler'
 import { createDom, updateDom } from './dom'
 
-let currentRoot: Fiber = null
-let WIPRoot: Fiber = null
+let preCommit: Fiber = null
 let deletions: Fiber[] = []
 let WIPFiber: Fiber = null
 
@@ -12,82 +11,73 @@ const arrayfy = child => Array.isArray(child) ? child : [child]
 
 export const isFn = fn => fn instanceof Function
 export const getWIPFiber = () => WIPFiber
-export const getCurrentRoot = () => currentRoot
 
-export const setWIPRoot = (fiber: Fiber) => WIPRoot = fiber
 export const resetDeletions = () => deletions = []
 
 export function render(element: VNode, container: HTMLElement): void {
-  WIPRoot = {
+  const rootFiber = {
     dom: container,
     props: {
       children: [element]
     },
-    alternate: currentRoot,
     isSVG: (element as ElementNode).type === 'svg'
   }
-  disPatchUpdate(WIPRoot)
+  disPatchUpdate(rootFiber)
 }
 
-export function disPatchUpdate(nextUnitOfWork) {
-  scheduleWork(workLoop.bind(null, nextUnitOfWork))
+export function disPatchUpdate(fiber) {
+  if(!fiber.dirty) {
+    fiber.dirty = true
+    fiber.sibling = null
+    scheduleWork(workLoop.bind(null, fiber))
+  }
 }
 
 function reconcileChildren(WIPFiber: Fiber, children: VNode): void {
   let index = 0
-  let oldFiber = WIPFiber.alternate && WIPFiber.alternate.child
   let prevSibling = null
 
-  while (
-    index < (children as VNode[]).length ||
-    oldFiber != null
-  ) {
-    const currentChild = children[index]
+  let oldChildren = WIPFiber.kids || []
+  let newChildren = (WIPFiber.kids = arrayfy(children))
 
-    let newFiber: Fiber = null
-    const sameType = oldFiber && currentChild && currentChild.type === oldFiber.type
+  let length = Math.max(oldChildren.length, newChildren.length)
+
+  while (index < length) {
+
+    let oldChild = oldChildren[index]
+    let currentChild = newChildren[index]
+
+    const sameType = oldChild && currentChild && oldChild.type === currentChild.type
 
     if (sameType) {
-      newFiber = {
-        type: oldFiber.type,
-        ref: oldFiber.ref,
-        props: currentChild.props,
-        dom: oldFiber.dom,
-        parent: WIPFiber,
-        alternate: oldFiber,
-        effectTag: 'UPDATE',
-        hooks: oldFiber.hooks,
-        isSVG: WIPFiber.isSVG || currentChild.type === 'svg'
-      }
-    }
-    if (currentChild && !sameType) {
-      newFiber = {
-        type: currentChild.type,
-        ref: currentChild.ref,
-        props: currentChild.props,
-        dom: null,
-        parent: WIPFiber,
-        alternate: null,
-        effectTag: 'PLACEMENT',
-        isSVG: WIPFiber.isSVG || currentChild.type === 'svg'
-      }
-    }
-    if (oldFiber && !sameType) {
-      oldFiber.effectTag = 'DELETION'
-      deletions.push(oldFiber)
+      currentChild.effectTag = 'UPDATE'
+      currentChild.dom = oldChild.dom
+      currentChild.ref = oldChild.ref
+      currentChild.prevProps = oldChild.props
+      currentChild.hooks = oldChild.hooks
+      currentChild.kids = oldChild.kids
+      currentChild.parent = WIPFiber
+      currentChild.isSVG = WIPFiber.isSVG || currentChild.type === 'svg'
     }
 
-    if (oldFiber) {
-      oldFiber = oldFiber.sibling
+    if (currentChild && !sameType) {
+      currentChild.effectTag = 'PLACEMENT'
+      currentChild.parent = WIPFiber
+      currentChild.isSVG = WIPFiber.isSVG || currentChild.type === 'svg'
+    }
+    
+    if (oldChild && !sameType) {
+      oldChild.effectTag = 'DELETION'
+      deletions.push(oldChild)
     }
 
     if (index === 0) {
-      WIPFiber.child = newFiber
+      WIPFiber.child = currentChild
     } else if (currentChild) {
-      prevSibling.sibling = newFiber
+      prevSibling.sibling = currentChild
     }
 
-    prevSibling = newFiber
+    prevSibling = currentChild
     index++
   }
 }
@@ -117,7 +107,13 @@ function performUnitOfWork(fiber: Fiber): Fiber {
     return fiber.child
   }
   while (fiber) {
-    if(fiber.sibling) {
+    if (!preCommit && fiber.dirty) {
+      preCommit = fiber
+      fiber.dirty = false
+      return null
+    }
+
+    if (fiber.sibling) {
       return fiber.sibling
     }
     fiber = fiber.parent
@@ -170,7 +166,7 @@ function commitWork(fiber: Fiber): void {
   if (fiber.effectTag === 'UPDATE') {
     updateDom(
       fiber.dom,
-      fiber.alternate.props,
+      fiber.prevProps,
       fiber.props
     )
   }
@@ -183,24 +179,24 @@ function commitWork(fiber: Fiber): void {
   commitWork(fiber.sibling)
 }
 
-function commitRoot(): void {
+function commitRoot(fiber): void {
   deletions.forEach(commitWork)
-  commitWork(WIPRoot.child)
-  currentRoot = WIPRoot
+  fiber.parent ? commitWork(fiber) : commitWork(fiber.child)
   resetDeletions()
-  WIPRoot = null
+  preCommit = null
 }
 
 function workLoop(nextUnitOfWork): void {
   while (nextUnitOfWork && !shouldYield()) {
     nextUnitOfWork = performUnitOfWork(nextUnitOfWork)
   }
+  
   if (nextUnitOfWork) {
     return workLoop.bind(null, nextUnitOfWork)
   }
 
-  if (!nextUnitOfWork && WIPRoot) {
-    commitRoot()
+  if (preCommit) {
+    commitRoot(preCommit)
   }
 }
 
