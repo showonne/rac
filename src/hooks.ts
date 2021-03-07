@@ -1,4 +1,4 @@
-import { isFn, getWIPFiber, getCurrentRoot, setWIPRoot, resetDeletions, disPatchUpdate } from './reconciler'
+import { isFn, getWIPFiber, disPatchUpdate } from './reconciler'
 
 let hookIndex = null
 
@@ -17,25 +17,12 @@ function getHook() {
 
 export const resetHookIndex = () => hookIndex = 0
 
-const updateRoot = () => {
-  let currentRoot = getCurrentRoot()
-  let WIPRoot = {
-    dom: currentRoot.dom,
-    props: currentRoot.props,
-    alternate: currentRoot
-  }
-
-  setWIPRoot(WIPRoot)
-  resetDeletions()
-  disPatchUpdate(WIPRoot)
-}
-
 export function useState(initialState: any) {
   return useReducer(null, initialState)
 }
 
 export function useReducer(reducer, initialState) {
-  let [hook] = getHook()
+  let [hook, WIPFiber] = getHook()
   
   const dispatch = value => {
     if (reducer) {
@@ -43,11 +30,10 @@ export function useReducer(reducer, initialState) {
     } else {
       hook.value = isFn(value) ? value(hook.value) : value
     }
-
-    updateRoot()
+    disPatchUpdate(WIPFiber)
   }
 
-  return [hook.value ? hook.value : hook.value = initialState, dispatch]
+  return [hook.value != null ? hook.value : hook.value = initialState, dispatch]
 }
 
 export function useMemo(cb, deps) {
