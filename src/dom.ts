@@ -1,43 +1,36 @@
 const isEvent = key => key.startsWith('on')
-const isNew = (prev, next) => key => prev[key] !== next[key]
-const isGone = (prev, next) => key => !(key in next)
-const isProp = key => key !== 'children' && !isEvent(key)
 
+export function updateDom(dom, oldProps, newProps) {
 
-export function updateDom(dom, prevProps, nextProps) {
-  Object.keys(prevProps)
-    .filter(isProp)
-    .filter(isGone(prevProps, nextProps))
-    .forEach(key => {
-      dom[key] = ''
-    })
-
-  Object.keys(prevProps)
-    .filter(isEvent)
-    .filter(key => !(key in nextProps) || isNew(prevProps, nextProps)(key))
-    .forEach(key => {
-      const eventType = key.toLowerCase().substring(2)
-      dom.removeEventListener(eventType, prevProps[key])
-    })
-
-  Object.keys(nextProps)
-    .filter(isProp)
-    .filter(isNew(prevProps, nextProps))
-    .forEach(key => {
-      if (!(dom instanceof SVGElement)) {
-        dom[key] = nextProps[key]
-      } else {
-        dom.setAttribute(key, nextProps[key])
+  for (let key in { ...oldProps, ...newProps }) {
+    if (key === 'children') {
+      continue
+    }
+    const oldValue = oldProps[key]
+    const newValue = newProps[key]
+    if (isEvent(key)) {
+      const eventType = key.slice(2).toLowerCase()
+      if (oldValue) {
+        dom.removeEventListener(eventType, oldValue)
       }
-    })
-
-  Object.keys(nextProps)
-    .filter(isEvent)
-    .filter(isNew(prevProps, nextProps))
-    .forEach(key => {
-      const eventType = key.toLowerCase().substring(2)
-      dom.addEventListener(eventType, nextProps[key])
-    })
+      if (newValue) {
+        dom.addEventListener(eventType, newValue)
+      }
+    } else if (key === 'style') {
+      if (typeof newValue === 'string') {
+        (dom as HTMLElement).style.cssText = newValue
+      } else {
+        for (let styleName in { ...oldValue, ...newValue }) {
+          dom.style[styleName] = newValue[styleName] || ''
+        }
+      }
+    } else if (!(dom instanceof SVGElement)) {
+      // for text node
+      dom[key] = newValue || ''
+    } else {
+      dom.setAttribute(key, newValue || null)
+    }
+  }
 }
 
 export function createDom(fiber) {
