@@ -1,8 +1,9 @@
+import { Fiber, Props, DOMNode } from './type'
 const isEvent = key => key.startsWith('on')
 
-export function updateDom(dom, oldProps, newProps) {
+export function updateDom(dom: DOMNode, oldProps: Props, newProps: Props): void {
 
-  for (let key in { ...oldProps, ...newProps }) {
+  for (const key in { ...oldProps, ...newProps }) {
     if (key === 'children') {
       continue
     }
@@ -20,25 +21,25 @@ export function updateDom(dom, oldProps, newProps) {
       if (typeof newValue === 'string') {
         (dom as HTMLElement).style.cssText = newValue
       } else {
-        for (let styleName in { ...oldValue, ...newValue }) {
-          dom.style[styleName] = newValue[styleName] || ''
+        for (const styleName in { ...oldValue, ...newValue }) {
+          (dom as HTMLElement).style[styleName] = newValue[styleName] || ''
         }
       }
     } else if (!(dom instanceof SVGElement)) {
       // for text node
-      dom[key] = newValue || ''
+      dom[key] = newValue ?? ''
     } else {
       dom.setAttribute(key, newValue || null)
     }
   }
 }
 
-export function createDom(fiber) {
+export function createDom(fiber: Fiber): DOMNode {
   const dom = fiber.type === 'text'
     ? document.createTextNode('')
-    : fiber.isSVG ? document.createElementNS('http://www.w3.org/2000/svg', fiber.type) : document.createElement(fiber.type)
+    : fiber.isSVG ? document.createElementNS('http://www.w3.org/2000/svg', fiber.type as string) : document.createElement(fiber.type as string)
 
-  updateDom(dom, {}, fiber.props)
+  updateDom(dom, {} as Props, fiber.props)
 
-  return dom
+  return dom           
 }

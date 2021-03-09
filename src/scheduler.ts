@@ -1,11 +1,13 @@
 let deadline = 0
 const threshold = 1000 / 60
 
-let queue = []
-let unit = []
+const queue = []
+const unit = []
+
+const getTime = () => performance.now()
 
 const postMessage = (() => {
-  let cb = () => unit.splice(0, unit.length).forEach(c => c())
+  const cb = () => unit.splice(0, unit.length).forEach(c => c())
 
   if (typeof MessageChannel !== 'undefined') {
     const { port1, port2 } = new MessageChannel()
@@ -14,17 +16,6 @@ const postMessage = (() => {
   }
   return () => setTimeout(cb)
 })()
-
-export function schedule(cb) {
-  unit.push(cb)
-  postMessage()
-}
-
-export function scheduleWork(cb) {
-  const job = { cb }
-  queue.push(job)
-  schedule(flushWork)
-}
 
 const flushWork = () => {
   deadline = getTime() + threshold
@@ -42,6 +33,15 @@ const flushWork = () => {
   job && schedule(flushWork)
 }
 
-export const shouldYield = () => (navigator as any)?.scheduling?.isInputPending() || getTime() > deadline
+export function schedule(cb) {
+  unit.push(cb)
+  postMessage()
+}
 
-const getTime = () => performance.now()
+export function scheduleWork(cb) {
+  const job = { cb }
+  queue.push(job)
+  schedule(flushWork)
+}
+
+export const shouldYield = () => (navigator as any)?.scheduling?.isInputPending() || getTime() > deadline

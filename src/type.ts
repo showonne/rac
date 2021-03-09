@@ -4,7 +4,7 @@ export type StateHook = {
 }
 
 export interface Props extends Record<string, any> {
-  children: VNode
+  children?: VNode
 }
 
 export type TextNode = string | number
@@ -16,16 +16,21 @@ export interface ElementNode<P extends Props = any> {
 
 export type VNode = TextNode | ElementNode | VNode[] | null | undefined
 
+export type DOMNode = null | HTMLElement | SVGElement | Text
+export interface FC<P extends Props> {
+  (props: P): ElementNode<P> | null
+}
+
 export type Fiber<P extends Props = any> = {
-  type?: string | Function,
-  dirty?: Boolean,
+  type?: string | FC<P>,
+  dirty?: boolean,
   ref?: any,
   kids?: any[],
   props: P,
-  dom?: null | HTMLElement,
+  dom?: DOMNode,
   parent?: Fiber,
   sibling?: Fiber,
-  prevProps: P,
+  prevProps?: P,
   effectTag?: string,
   child?: Fiber,
   hooks?: any,

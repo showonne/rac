@@ -1,3 +1,4 @@
+const path = require('path')
 const typescript = require('rollup-plugin-typescript2')
 const { terser } = require('rollup-plugin-terser')
 const eslint = require('@rollup/plugin-eslint')
@@ -8,11 +9,15 @@ export default {
     { file: 'dist/rac.umd.js', format: 'umd', name: 'rac' }
   ],
   plugins: [
-    typescript({
-      tsconfig: 'tsconfig.json',
-      useTsconfigDeclarationDir: true
-    }),
     terser(),
-    eslint()
+    eslint({
+      throwOnError: true,
+      include: ['src/**/*.ts']
+    }),
+    typescript({
+      verbosity: 0,
+      tsconfig: path.resolve(__dirname, 'tsconfig.json'),
+      useTsconfigDeclarationDir: true
+    })
   ]
 }

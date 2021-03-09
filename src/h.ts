@@ -1,12 +1,12 @@
 
-import { VNode } from './type';
+import { VNode } from './type'
 
 function createTextElement(nodeValue: string): VNode {
   return {
     type: 'text',
     props: {
       nodeValue,
-      children: []
+      children: []  
     }
   }
 }

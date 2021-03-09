@@ -5,7 +5,7 @@ let hookIndex = null
 const hasChanged = (prevDeps, currentDeps) => !prevDeps || prevDeps.length !== currentDeps.length || prevDeps.some((val, index) => val !== currentDeps[index])
 
 function getHook() {
-  let WIPFiber = getWIPFiber()
+  const WIPFiber = getWIPFiber()
 
   WIPFiber.hooks = WIPFiber?.hooks || { list: [], effect: [], layout: [] }
 
@@ -22,7 +22,7 @@ export function useState(initialState: any) {
 }
 
 export function useReducer(reducer, initialState) {
-  let [hook, WIPFiber] = getHook()
+  const [hook, WIPFiber] = getHook()
   
   const dispatch = value => {
     if (reducer) {
@@ -37,7 +37,7 @@ export function useReducer(reducer, initialState) {
 }
 
 export function useMemo(cb, deps) {
-  let [hook] = getHook()
+  const [hook] = getHook()
 
   if (hasChanged(hook.deps, deps)) {
     hook.deps = deps
@@ -47,7 +47,7 @@ export function useMemo(cb, deps) {
   }
 }
 
-export function useCallback(cb, deps) {
+export function useCallback(cb, deps: any[]) {
   return useMemo(() => cb, deps)
 }
 
