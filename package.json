@@ -2,11 +2,12 @@
   "name": "rac",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "dist/rac.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "rollup -c",
-    "dev": "rollup -c -w"
+    "dev": "rollup -c -w",
+    "prepublishOnly": "npm run build"
   },
   "keywords": [],
   "author": "",

@@ -6,7 +6,8 @@ const eslint = require('@rollup/plugin-eslint')
 export default {
   input: 'src/index.ts',
   output: [
-    { file: 'dist/rac.umd.js', format: 'umd', name: 'rac' }
+    { file: 'dist/rac.umd.js', format: 'umd', name: 'rac', sourcemap: true },
+    { file: 'dist/rac.js', format: 'esm', sourcemap: true }
   ],
   plugins: [
     terser(),
