@@ -9,6 +9,10 @@
     "dev": "rollup -c -w",
     "prepublishOnly": "npm run build"
   },
+  "files": [
+    "dist"
+  ],
+  "typings": "./dist/types/index.d.ts",
   "keywords": [],
   "author": "showonne",
   "license": "ISC",

@@ -9,6 +9,9 @@
     ],
     "moduleResolution": "node",
     "jsxFactory": "h",
-    "jsxFragmentFactory": "Fragment"
-  }
+    "jsxFragmentFactory": "Fragment",
+    "declaration": true,
+    "declarationDir": "dist/types/"
+  },
+  "include": ["src"]
 }
