@@ -1,7 +1,7 @@
 {
-  "name": "rac",
+  "name": "@racjs/rac",
   "version": "1.0.0",
-  "description": "",
+  "description": "React like library [follow this post](https://pomb.us/build-your-own-react/). ---",
   "main": "dist/rac.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -10,7 +10,7 @@
     "prepublishOnly": "npm run build"
   },
   "keywords": [],
-  "author": "",
+  "author": "showonne",
   "license": "ISC",
   "devDependencies": {
     "@rollup/plugin-eslint": "^8.0.1",
@@ -22,5 +22,17 @@
     "rollup-plugin-terser": "^7.0.2",
     "rollup-plugin-typescript2": "^0.29.0",
     "typescript": "^4.1.3"
-  }
+  },
+  "directories": {
+    "doc": "docs",
+    "example": "examples"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/showonne/rac.git"
+  },
+  "bugs": {
+    "url": "https://github.com/showonne/rac/issues"
+  },
+  "homepage": "https://github.com/showonne/rac#readme"
 }
