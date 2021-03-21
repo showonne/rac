@@ -26,63 +26,125 @@ export function render(element: VNode, container: HTMLElement): void {
 }
 
 export function disPatchUpdate(fiber: Fiber): void {
-  if(!fiber.dirty) {
+  if (!fiber.dirty) {
     fiber.dirty = true
     fiber.sibling = null
     scheduleWork(workLoop.bind(null, fiber))
   }
 }
 
-function reconcileChildren(WIPFiber: Fiber, children: VNode): void {
-  let index = 0
-  let prevSibling = null
+const isSame = (node1, node2) => node1.key === node2.key
 
+function clone(target, source) {
+  target.dom = source.dom
+  target.ref = source.ref
+  target.prevProps = source.props
+  target.hooks = source.hooks
+  target.kids = source.kids
+  target.isSVG = source.isSVG
+}
+
+function reconcileChildren(WIPFiber: Fiber, children: VNode): void {
   const oldChildren = WIPFiber.kids || []
   const newChildren = (WIPFiber.kids = arrayfy(children))
 
-  const length = Math.max(oldChildren.length, newChildren.length)
+  let oldStart = 0
+  let oldEnd = oldChildren.length - 1
+  let newStart = 0
+  let newEnd = newChildren.length - 1
 
-  while (index < length) {
+  let oldStartNode = oldChildren[oldStart]
+  let oldEndNode = oldChildren[oldEnd]
+  let newStartNode = newChildren[newStart]
+  let newEndNode = newChildren[newEnd]
 
-    const oldChild = oldChildren[index]
-    const currentChild = newChildren[index]
+  while (oldStart <= oldEnd && newStart <= newEnd) {
+    if (!oldStartNode) {
+      oldStartNode = oldChildren[++oldStart]
+    } else if (!oldEndNode) {
+      oldEndNode = oldChildren[--oldEnd]
+    } else if (isSame(oldStartNode, newStartNode)) {
+      clone(newStartNode, oldStartNode)
+      newStartNode.effectTag = 'UPDATE'
 
-    const sameType = oldChild && currentChild && oldChild.type === currentChild.type
+      oldStartNode = oldChildren[++oldStart]
+      newStartNode = newChildren[++newStart]
+    } else if (isSame(oldEndNode, newEndNode)) {
+      clone(newEndNode, oldEndNode)
+      newEndNode.effectTag = 'UPDATE'
 
-    if (sameType) {
-      currentChild.effectTag = 'UPDATE'
-      currentChild.dom = oldChild.dom
-      currentChild.ref = oldChild.ref
-      currentChild.prevProps = oldChild.props
-      currentChild.hooks = oldChild.hooks
-      currentChild.kids = oldChild.kids
-      currentChild.parent = WIPFiber
-      currentChild.isSVG = WIPFiber.isSVG || currentChild.type === 'svg'
+      oldEndNode = oldChildren[--oldEnd]
+      newEndNode = newChildren[--newEnd]
+    } else if (isSame(oldStartNode, newEndNode)) {
+      clone(newEndNode, oldStartNode)
+      newEndNode.effectTag = 'INSERT'
+      newEndNode.after = oldChildren[oldEndNode + 1]
+      // WIPFiber.dom.insertBefore(oldStartNode.dom, oldEndNode.dom.nextSibling)
+
+      oldStartNode = oldChildren[++oldStart]
+      newEndNode = newChildren[--newEnd]
+    } else if (isSame(oldEndNode, newStartNode)) {
+      clone(newStartNode, oldEndNode)
+      newStartNode.effectTag = 'INSERT'
+      newStartNode.after = oldStartNode
+      // WIPFiber.dom.insertBefore(oldEndNode.dom, oldStartNode.dom)
+
+      oldEndNode = oldChildren[--oldEnd]
+      newStartNode = newChildren[++newStart]
+    } else {
+      const indexInOld = oldChildren.findIndex(child => isSame(child, newStartNode))
+      if (indexInOld >= 0) {
+        const oldNode = oldChildren[indexInOld]
+        clone(newStartNode, oldNode)
+        newStartNode.effectTag = 'INSERT'
+        newStartNode.after = oldStartNode
+        // WIPFiber.dom.insertBefore(newStartNode.dom, oldStartNode.dom)
+        oldChildren[indexInOld] = undefined
+      } else {
+        newStartNode.effectTag = 'INSERT'
+        // newStartNode.dom = createDom(newStartNode)
+        newStartNode.after = oldStartNode
+        // WIPFiber.dom.insertBefore(newStartNode.dom, oldStartNode.dom)
+      }
+      newStartNode = newChildren[++newStart]
     }
-
-    if (currentChild && !sameType) {
-      currentChild.effectTag = 'PLACEMENT'
-      currentChild.parent = WIPFiber
-      currentChild.isSVG = WIPFiber.isSVG || currentChild.type === 'svg'
+  }
+  if (oldEnd < oldStart) {
+    for (let i = newStart; i <= newEnd; i++) {
+      let node = newChildren[i]
+      node.effectTag = 'INSERT'
+      node.after = oldStartNode
+      // newStartNode.dom = createDom(newStartNode)
+      // WIPFiber.dom.insertBefore(newStartNode.dom, oldStartNode.dom)
     }
-    
-    if (oldChild && !sameType) {
-      oldChild.effectTag = 'DELETION'
-      deletions.push(oldChild)
+  } else if (newEnd < newStart) {
+    for (let i = oldStart; i <= oldEnd; i++) {
+      let node = oldChildren[i]
+      node.effectTag = 'DELETION'
+      deletions.push(node)
     }
+  }
 
+  let index = 0
+  let prevSibling = null
+
+  while (index < newChildren.length) {
+    let currentChild = newChildren[index]
     if (index === 0) {
       WIPFiber.child = currentChild
     } else if (currentChild) {
       prevSibling.sibling = currentChild
     }
 
+    currentChild.isSVG = WIPFiber.isSVG || currentChild.type === 'svg'
+    currentChild.parent = WIPFiber
+
     prevSibling = currentChild
     index++
   }
 }
 
-function updateFunctionComponent <P = Props>(fiber: Fiber): void {
+function updateFunctionComponent<P = Props>(fiber: Fiber): void {
   WIPFiber = fiber
   resetHookIndex()
   const children = arrayfy((fiber.type as FC<P>)(fiber.props))
@@ -146,13 +208,13 @@ function commitWork(fiber: Fiber): void {
   }
 
   let parentFiber = fiber.parent
-  while(!parentFiber.dom) {
+  while (!parentFiber.dom) {
     parentFiber = parentFiber.parent
   }
   const parentDom = parentFiber.dom
 
-  if (fiber.effectTag === 'PLACEMENT') {
-    parentDom.appendChild(fiber.dom)
+  if (fiber.effectTag === 'INSERT') {
+    parentDom.insertBefore(fiber.dom, fiber.after?.dom)
   }
 
   if (fiber.effectTag === 'DELETION') {
@@ -190,7 +252,7 @@ function workLoop(nextUnitOfWork: Fiber): void {
   while (nextUnitOfWork && !shouldYield()) {
     nextUnitOfWork = performUnitOfWork(nextUnitOfWork)
   }
-  
+
   if (nextUnitOfWork) {
     return workLoop.bind(null, nextUnitOfWork)
   }

@@ -14,6 +14,7 @@ function createTextElement(nodeValue: string): VNode {
 export function h(type, props, ...children): VNode {
   props = props || {}
   const ref = props.ref || null
+  const key = props.key || null
 
   children = children.map(child => typeof child === 'object' ? child : createTextElement(child))
 
@@ -24,6 +25,7 @@ export function h(type, props, ...children): VNode {
   return {
     type,
     ref,
+    key,
     props: {
       ...props,
       children: children.map(child => typeof child === 'object' ? child : createTextElement(child))
