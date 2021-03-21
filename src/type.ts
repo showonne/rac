@@ -24,6 +24,7 @@ export interface FC<P extends Props> {
 export type Fiber<P extends Props = any> = {
   type?: string | FC<P>,
   dirty?: boolean,
+  after?: Fiber,
   ref?: any,
   kids?: any[],
   props: P,

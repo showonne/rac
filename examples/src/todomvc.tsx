@@ -147,7 +147,7 @@ const TodoApp = () => {
           }
         </ul>
         {
-          todos4Show.filter(todo => todo.done).length ? <button className="clear-completed" style="display: block;" onClick={clearCompleted}>Clear completed</button> : null
+          todos4Show.filter(todo => todo.done).length ? <button className="clear-completed" style="display: block;" onClick={clearCompleted}>Clear completed</button> : ''
         }
       </footer>
     </section>
