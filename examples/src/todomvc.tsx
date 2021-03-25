@@ -140,14 +140,14 @@ const TodoApp = () => {
         <ul className="filters">
           {
             tabs.map(tab => (
-              <li onClick={() => setCurrentTab(tab.id)}>
+              <li key={tab.id} onClick={() => setCurrentTab(tab.id)}>
                 <a className={tab.id === currentTab ? 'selected' : ''}>{tab.label}</a>
               </li>
             ))
           }
         </ul>
         {
-          todos4Show.filter(todo => todo.done).length ? <button className="clear-completed" style="display: block;" onClick={clearCompleted}>Clear completed</button> : ''
+          todos4Show.filter(todo => todo.done).length ? <button className="clear-completed" style={{display: 'block'}} onClick={clearCompleted}>Clear completed</button> : <div/>
         }
       </footer>
     </section>

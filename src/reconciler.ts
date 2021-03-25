@@ -33,7 +33,9 @@ export function disPatchUpdate(fiber: Fiber): void {
   }
 }
 
-const isSame = (node1, node2) => node1.key === node2.key
+const getKey = fiber => fiber == null ? fiber : fiber.key
+const getType = fiber => isFn(fiber.type) ? fiber.type.name : fiber.type
+const isSame = (node1, node2) => getKey(node1) === getKey(node2) && getType(node1) === getType(node2)
 
 function clone(target, source) {
   target.dom = source.dom
@@ -75,53 +77,36 @@ function reconcileChildren(WIPFiber: Fiber, children: VNode): void {
 
       oldEndNode = oldChildren[--oldEnd]
       newEndNode = newChildren[--newEnd]
-    } else if (isSame(oldStartNode, newEndNode)) {
-      clone(newEndNode, oldStartNode)
-      newEndNode.effectTag = 'INSERT'
-      newEndNode.after = oldChildren[oldEndNode + 1]
-      // WIPFiber.dom.insertBefore(oldStartNode.dom, oldEndNode.dom.nextSibling)
-
-      oldStartNode = oldChildren[++oldStart]
-      newEndNode = newChildren[--newEnd]
-    } else if (isSame(oldEndNode, newStartNode)) {
-      clone(newStartNode, oldEndNode)
-      newStartNode.effectTag = 'INSERT'
-      newStartNode.after = oldStartNode
-      // WIPFiber.dom.insertBefore(oldEndNode.dom, oldStartNode.dom)
-
-      oldEndNode = oldChildren[--oldEnd]
-      newStartNode = newChildren[++newStart]
     } else {
       const indexInOld = oldChildren.findIndex(child => isSame(child, newStartNode))
+
       if (indexInOld >= 0) {
         const oldNode = oldChildren[indexInOld]
         clone(newStartNode, oldNode)
         newStartNode.effectTag = 'INSERT'
         newStartNode.after = oldStartNode
-        // WIPFiber.dom.insertBefore(newStartNode.dom, oldStartNode.dom)
         oldChildren[indexInOld] = undefined
       } else {
         newStartNode.effectTag = 'INSERT'
-        // newStartNode.dom = createDom(newStartNode)
         newStartNode.after = oldStartNode
-        // WIPFiber.dom.insertBefore(newStartNode.dom, oldStartNode.dom)
       }
       newStartNode = newChildren[++newStart]
     }
   }
+
   if (oldEnd < oldStart) {
     for (let i = newStart; i <= newEnd; i++) {
       let node = newChildren[i]
       node.effectTag = 'INSERT'
-      node.after = oldStartNode
-      // newStartNode.dom = createDom(newStartNode)
-      // WIPFiber.dom.insertBefore(newStartNode.dom, oldStartNode.dom)
+      node.after = newChildren[newEnd + 1]
     }
   } else if (newEnd < newStart) {
     for (let i = oldStart; i <= oldEnd; i++) {
       let node = oldChildren[i]
-      node.effectTag = 'DELETION'
-      deletions.push(node)
+      if (node) {
+        node.effectTag = 'DELETION'
+        deletions.push(node)
+      }
     }
   }
 
@@ -242,8 +227,8 @@ function commitWork(fiber: Fiber): void {
 }
 
 function commitRoot(fiber: Fiber): void {
-  deletions.forEach(commitWork)
   fiber.parent ? commitWork(fiber) : commitWork(fiber.child)
+  deletions.forEach(commitWork)
   resetDeletions()
   preCommit = null
 }

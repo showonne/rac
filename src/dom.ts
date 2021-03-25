@@ -22,7 +22,7 @@ export function updateDom(dom: DOMNode, oldProps: Props, newProps: Props): void 
         (dom as HTMLElement).style.cssText = newValue
       } else {
         for (const styleName in { ...oldValue, ...newValue }) {
-          (dom as HTMLElement).style[styleName] = newValue[styleName] || ''
+          (dom as HTMLElement).style[styleName] = newValue?.[styleName] || ''
         }
       }
     } else if (!(dom instanceof SVGElement)) {
