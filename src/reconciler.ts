@@ -37,13 +37,12 @@ const getKey = fiber => fiber == null ? fiber : fiber.key
 const getType = fiber => isFn(fiber.type) ? fiber.type.name : fiber.type
 const isSame = (node1, node2) => getKey(node1) === getKey(node2) && getType(node1) === getType(node2)
 
-function clone(target, source) {
+function clone(target: Fiber, source: Fiber): void {
   target.dom = source.dom
   target.ref = source.ref
   target.prevProps = source.props
   target.hooks = source.hooks
   target.kids = source.kids
-  target.isSVG = source.isSVG
 }
 
 function reconcileChildren(WIPFiber: Fiber, children: VNode): void {
@@ -115,6 +114,7 @@ function reconcileChildren(WIPFiber: Fiber, children: VNode): void {
 
   while (index < newChildren.length) {
     let currentChild = newChildren[index]
+   
     if (index === 0) {
       WIPFiber.child = currentChild
     } else if (currentChild) {
