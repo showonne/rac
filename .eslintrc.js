@@ -14,6 +14,9 @@ module.exports = {
     sourceType: 'module'
   },
   rules: {
-    semi: ['error', 'never']
+    semi: ['error', 'never'],
+    'max-len': ['error', { 'code': 120 }],
+    'arrow-body-style': ['error', 'as-needed'],
+    'object-shorthand': ['error']
   }
 }

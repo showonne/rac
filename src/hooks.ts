@@ -2,7 +2,10 @@ import { isFn, getWIPFiber, disPatchUpdate } from './reconciler'
 
 let hookIndex = null
 
-const hasChanged = (prevDeps, currentDeps) => !prevDeps || prevDeps.length !== currentDeps.length || prevDeps.some((val, index) => val !== currentDeps[index])
+const hasChanged = (prevDeps, currentDeps) =>
+  !prevDeps 
+  || prevDeps.length !== currentDeps.length
+  || prevDeps.some((val, index) => val !== currentDeps[index])
 
 function getHook() {
   const WIPFiber = getWIPFiber()

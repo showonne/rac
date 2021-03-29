@@ -35,7 +35,7 @@ export function disPatchUpdate(fiber: Fiber): void {
 
 const getKey = fiber => fiber == null ? fiber : fiber.key
 const getType = fiber => isFn(fiber.type) ? fiber.type.name : fiber.type
-const isSame = (node1, node2) => getKey(node1) === getKey(node2) && getType(node1) === getType(node2)
+const isSame = (node1, node2) => getKey(node1) === getKey(node2) && getType(node1) === getType(node2)                  
 
 function clone(target: Fiber, source: Fiber): void {
   target.dom = source.dom

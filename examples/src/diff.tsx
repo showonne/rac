@@ -8,7 +8,7 @@ const genSource = () => {
 }
 
 function App() {
-  const [keys, setKeys] = useState([1, 2, 3, 4, 5])
+  const [keys, setKeys] = useState([0, 1, 2, 3, 4, 5])
   // const [keys, setKeys] = useState([3, 4, 2, 1, 0])
 
   // useEffect(() => {
@@ -24,7 +24,7 @@ function App() {
       </p>
       <ul>
         {
-          keys.map(key => key === 1 ? <div style="color: red;" key={`${key}`}>key 1 div</div> : <li key={`${key}`}>{key}</li>)
+          keys.map(key => key === 1 ? <div style="color: red;" key={key}>key 1 div</div> : <li key={key}>{key}</li>)
         }
       </ul>
       <button onClick={() => setKeys(genSource())}>Change key</button>

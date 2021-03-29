@@ -13,8 +13,8 @@ function createTextElement(nodeValue: string): VNode {
 
 export function h(type, props, ...children): VNode {
   props = props || {}
-  const ref = props.ref || null
-  const key = props.key || null
+  const ref = props.ref ?? null
+  const key = props.key ?? null
 
   while (children.some(child => Array.isArray(child))) {
     children = children.flat()
@@ -26,7 +26,9 @@ export function h(type, props, ...children): VNode {
     key,
     props: {
       ...props,
-      children: children.map(child => typeof child === 'object' ? child : createTextElement(child)).filter(e => e != null)
+      children: children
+        .map(child => typeof child === 'object'? child : createTextElement(child))
+        .filter(e => e != null)
     }
   } as VNode
 }
