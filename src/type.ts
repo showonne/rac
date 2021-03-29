@@ -25,6 +25,7 @@ export type Fiber<P extends Props = any> = {
   type?: string | FC<P>,
   dirty?: boolean,
   after?: Fiber,
+  key?: any,
   ref?: any,
   kids?: any[],
   props: P,
@@ -35,5 +36,5 @@ export type Fiber<P extends Props = any> = {
   effectTag?: string,
   child?: Fiber,
   hooks?: any,
-  isSVG?: any
+  isSVG?: boolean
 }
