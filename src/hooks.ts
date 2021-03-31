@@ -10,7 +10,7 @@ const hasChanged = (prevDeps, currentDeps) =>
 function getHook() {
   const WIPFiber = getWIPFiber()
 
-  WIPFiber.hooks = WIPFiber?.hooks || { list: [], effect: [], layout: [] }
+  WIPFiber.hooks = WIPFiber.hooks || { list: [], effect: [], layout: [] }
 
   if (hookIndex >= WIPFiber.hooks.list.length) {
     WIPFiber.hooks.list.push({})
@@ -28,11 +28,7 @@ export function useReducer(reducer, initialState) {
   const [hook, WIPFiber] = getHook()
   
   const dispatch = value => {
-    if (reducer) {
-      hook.value = reducer(hook.value, value)
-    } else {
-      hook.value = isFn(value) ? value(hook.value) : value
-    }
+    hook.value = reducer ? reducer(hook.value, value) : isFn(value) ? value(hook.value) : value
     disPatchUpdate(WIPFiber)
   }
 

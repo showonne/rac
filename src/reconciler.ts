@@ -35,7 +35,7 @@ export function disPatchUpdate(fiber: Fiber): void {
 
 const getKey = fiber => fiber == null ? fiber : fiber.key
 const getType = fiber => isFn(fiber.type) ? fiber.type.name : fiber.type
-const isSame = (node1, node2) => getKey(node1) === getKey(node2) && getType(node1) === getType(node2)                  
+const isSame = (node1, node2) => getKey(node1) === getKey(node2) && getType(node1) === getType(node2) 
 
 function clone(target: Fiber, source: Fiber): void {
   target.dom = source.dom
@@ -132,7 +132,22 @@ function reconcileChildren(WIPFiber: Fiber, children: VNode): void {
 function updateFunctionComponent<P = Props>(fiber: Fiber): void {
   WIPFiber = fiber
   resetHookIndex()
-  const children = arrayfy((fiber.type as FC<P>)(fiber.props))
+  let children
+  try {
+    children = arrayfy((fiber.type as FC<P>)(fiber.props))
+  } catch (e) {
+    if(e.then) {
+      const parent = WIPFiber.parent
+      if (parent.lazies) {
+        parent.lazies.push(e)
+      } else {
+        parent.lazies = [e]
+      }
+      children = [{ ...WIPFiber.parent.props.fallback }]
+    } else {
+      throw e
+    }
+  }
   reconcileChildren(fiber, children)
 }
 
@@ -181,7 +196,13 @@ function commitWork(fiber: Fiber): void {
   }
 
   if (isFn(fiber.type)) {
-
+    if (fiber.lazies) {
+      Promise.all(fiber.lazies)
+        .then(() => {
+          fiber.lazies = null
+          disPatchUpdate(fiber)
+        })
+    }
     if (fiber.hooks) {
       executeEffect(fiber.hooks.layout)
       schedule(() => executeEffect(fiber.hooks.effect))
