@@ -36,5 +36,6 @@ export type Fiber<P extends Props = any> = {
   effectTag?: string,
   child?: Fiber,
   hooks?: any,
+  lazies?: any,
   isSVG?: boolean
 }

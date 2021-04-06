@@ -36,3 +36,25 @@ export function h(type, props, ...children): VNode {
 export function Fragment(props) {
   return props.children
 }
+
+export function lazy(fn) {
+  let comp, err, p
+  return function Lazy(props) {
+    if (!p) {
+      p = fn()
+        .then(resp => comp = resp)
+        .catch(e => err = e)
+    }
+    if (err) {
+      throw err
+    }
+    if (!comp) {
+      throw p
+    }
+    return h(comp, props)
+  }
+}
+
+export function Suspense(props) {
+  return props.children
+}
