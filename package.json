@@ -1,6 +1,6 @@
 {
   "name": "@racjs/rac",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "React like library [follow this post](https://pomb.us/build-your-own-react/). ---",
   "main": "dist/rac.js",
   "unpkg": "dist/rac.umd.js",
