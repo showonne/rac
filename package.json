@@ -16,7 +16,7 @@
   "typings": "./dist/types/index.d.ts",
   "keywords": [],
   "author": "showonne",
-  "license": "ISC",
+  "license": "MIT",
   "devDependencies": {
     "@rollup/plugin-eslint": "^8.0.1",
     "@typescript-eslint/eslint-plugin": "^4.17.0",
