@@ -1,5 +1,5 @@
 let deadline = 0
-const threshold = 1000 / 60
+const threshold = 5
 
 const queue = []
 const unit = []

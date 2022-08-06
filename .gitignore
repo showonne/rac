@@ -3,3 +3,5 @@ dist
 .cache
 *.log
 package-lock.json
+
+.parcel-cache

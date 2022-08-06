@@ -1,5 +1,5 @@
 
-import { VNode } from './type'
+import { VNode, Props } from './type'
 
 function createTextElement(nodeValue: string): VNode {
   return {
@@ -11,7 +11,7 @@ function createTextElement(nodeValue: string): VNode {
   }
 }
 
-export function h(type, props, ...children): VNode {
+export function h(type: string, props: Props, ...children: Array<VNode | string>): VNode {
   props = props || {}
   const ref = props.ref ?? null
   const key = props.key ?? null
@@ -27,17 +27,17 @@ export function h(type, props, ...children): VNode {
     props: {
       ...props,
       children: children
-        .map(child => typeof child === 'object'? child : createTextElement(child))
+        .map(child => typeof child === 'object'? child : createTextElement(child as string))
         .filter(e => e != null)
     }
   } as VNode
 }
 
-export function Fragment(props) {
+export function Fragment(props: Props) {
   return props.children
 }
 
-export function lazy(fn) {
+export function lazy(fn: Function) {
   let comp, err, p
   return function Lazy(props) {
     if (!p) {
